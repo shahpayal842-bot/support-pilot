@@ -2,8 +2,10 @@ import pandas as pd
 import re
 import os
 
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
 # 1. Load raw dataset directly
-raw_file = "customer_support_tickets.csv"
+raw_file = os.path.join(BASE_DIR, "data", "customer_support_tickets.csv")
 df = pd.read_csv(raw_file)
 
 print(f"Original records: {df.shape[0]}")
@@ -36,7 +38,7 @@ for col in text_cols:
         df[col] = df[col].apply(clean_text)
 
 # 6. Save cleaned data to a new CSV
-output_file = "cleaned_customer_support_tickets.csv"
+output_file = os.path.join(BASE_DIR, "data", "cleaned_customer_support_tickets.csv")
 df.to_csv(output_file, index=False)
 
 print(f"\n Cleaning finished!")

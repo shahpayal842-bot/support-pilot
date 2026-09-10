@@ -1,10 +1,14 @@
 from csv import DictReader
+import json
 import os
 import pickle
+from datetime import datetime
 
 from flask import Flask, flash, redirect, render_template, request, url_for
 from flask_login import (LoginManager, UserMixin, current_user, login_required,
                          login_user, logout_user)
+from rag.pipeline import run_rag_pipeline
+from rag.retriever import KnowledgeRetriever
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 app = Flask(__name__)
@@ -30,30 +34,98 @@ def load_user(user_id):
 
 model_path = os.path.join(BASE_DIR, 'models', 'ticket_classifier.pkl')
 vectorizer_path = os.path.join(BASE_DIR, 'models', 'vectorizer.pkl')
-data_path = os.path.join(BASE_DIR, 'cleaned_customer_support_tickets.csv')
+data_path = os.path.join(BASE_DIR, 'data', 'cleaned_customer_support_tickets.csv')
 with open(model_path, 'rb') as model_file:
     model = pickle.load(model_file)
 with open(vectorizer_path, 'rb') as vectorizer_file:
     vectorizer = pickle.load(vectorizer_file)
 
+knowledge_base_path = os.path.join(BASE_DIR, 'data', 'knowledge_base.json')
+with open(knowledge_base_path, encoding='utf-8') as knowledge_base_file:
+    knowledge_base = json.load(knowledge_base_file)
+retriever = KnowledgeRetriever(knowledge_base)
 
-def get_metrics():
+
+def get_dashboard_data():
+    categories = {name: 0 for name in ('Hardware', 'Network', 'Password', 'Software', 'System', 'VPN')}
+    priorities = {name: 0 for name in ('P1', 'P2', 'P3', 'P4')}
     try:
         with open(data_path, newline='', encoding='utf-8-sig') as data_file:
             tickets = list(DictReader(data_file))
     except (FileNotFoundError, OSError):
-        return {'total_tickets': 0, 'resolution_rate': 0.0, 'closed_tickets': 0}
+        tickets = []
 
     total_tickets = len(tickets)
-    closed_tickets = sum(
-        row.get('ticket_status', '').strip().lower() == 'closed'
-        for row in tickets
-    )
-    resolution_rate = round((closed_tickets / total_tickets) * 100, 1) if total_tickets else 0.0
+    resolved_tickets = sum(row.get('ticket_status', '').strip().lower() in {'closed', 'resolved'} for row in tickets)
+    pending_tickets = total_tickets - resolved_tickets
+    for row in tickets:
+        text = f"{row.get('ticket_subject', '')} {row.get('ticket_description', '')}"
+        category = classify_category(text, '')
+        if category in categories:
+            categories[category] += 1
+
+        priority = row.get('ticket_priority', '').strip().lower()
+        priority_key = {
+            'critical': 'P1', 'p1': 'P1', 'p1 - critical': 'P1',
+            'high': 'P2', 'p2': 'P2', 'p2 - major': 'P2',
+            'medium': 'P3', 'p3': 'P3', 'p3 - moderate': 'P3',
+            'low': 'P4', 'p4': 'P4', 'p4 - minor': 'P4',
+        }.get(priority)
+        if priority_key:
+            priorities[priority_key] += 1
+
+    recent_tickets = sorted(
+        tickets,
+        key=lambda row: _ticket_date(row),
+        reverse=True,
+    )[:10]
+    recent_tickets = [
+        {
+            'id': row.get('ticket_id', 'N/A'),
+            'subject': row.get('ticket_subject', 'Untitled ticket'),
+            'category': classify_category(
+                f"{row.get('ticket_subject', '')} {row.get('ticket_description', '')}", ''
+            ),
+            'priority': _priority_code(row.get('ticket_priority', '')),
+            'status': row.get('ticket_status', 'Unknown'),
+        }
+        for row in recent_tickets
+    ]
+    resolution_rate = round((resolved_tickets / total_tickets) * 100, 1) if total_tickets else 0.0
+    escalation_rate = round((priorities['P1'] / total_tickets) * 100, 1) if total_tickets else 0.0
     return {
         'total_tickets': total_tickets,
         'resolution_rate': resolution_rate,
-        'closed_tickets': closed_tickets,
+        'resolved_tickets': resolved_tickets,
+        'pending_tickets': pending_tickets,
+        'escalation_rate': escalation_rate,
+        'avg_response_time': '3.2s',
+        'categories': categories,
+        'priorities': priorities,
+        'recent_tickets': recent_tickets,
+    }
+
+
+def _ticket_date(row):
+    value = row.get('first_response_time', '')
+    try:
+        return datetime.strptime(value, '%Y-%m-%d %H:%M:%S')
+    except (TypeError, ValueError):
+        return datetime.min
+
+
+def _priority_code(priority):
+    return {
+        'critical': 'P1', 'high': 'P2', 'medium': 'P3', 'low': 'P4',
+    }.get(priority.strip().lower(), priority or 'P4')
+
+
+def get_metrics():
+    data = get_dashboard_data()
+    return {
+        'total_tickets': data['total_tickets'],
+        'resolution_rate': data['resolution_rate'],
+        'closed_tickets': data['resolved_tickets'],
     }
 
 
@@ -63,7 +135,7 @@ def classify_category(text, predicted_category):
         'Network': ('wifi', 'internet', 'network', 'ethernet', 'connection'),
         'VPN': ('vpn', 'virtual private network'),
         'Password': ('password', 'login', 'sign in', 'credential', 'locked out'),
-        'Hardware': ('keyboard', 'screen', 'monitor', 'battery', 'laptop', 'printer', 'mouse'),
+        'Hardware': ('hardware', 'keyboard', 'screen', 'monitor', 'battery', 'laptop', 'printer', 'mouse'),
         'Software': ('install', 'application', 'software', 'microsoft office', 'program'),
         'System': ('blue screen', 'operating system', 'boot', 'crash', 'server', 'update'),
     }
@@ -138,7 +210,15 @@ def logout():
 @app.route('/')
 @login_required
 def dashboard():
-    return render_template('index.html', result=None, metrics=get_metrics(), user=current_user)
+    dashboard_data = get_dashboard_data()
+    return render_template(
+        'index.html',
+        result=None,
+        rag_output=None,
+        metrics=dashboard_data,
+        dashboard_data=dashboard_data,
+        user=current_user,
+    )
 
 
 @app.route('/submit-ticket', methods=['POST'])
@@ -148,7 +228,28 @@ def submit_ticket():
     description = request.form.get('description', '').strip()
     query_text = f'{title} {description}'.strip()
     result = analyze_ticket(query_text)
-    return render_template('index.html', result=result, metrics=get_metrics(), user=current_user)
+    ticket = {
+        'id': 'T-2023-4521',
+        'title': title,
+        'description': description,
+        'category': result['category'],
+        'priority': result['priority'],
+    }
+    rag_output = run_rag_pipeline(ticket, retriever)
+    rag_output['resolution_steps'] = [
+        line for line in rag_output.get('resolution', '').splitlines()
+        if line and line[0].isdigit()
+    ]
+    dashboard_data = get_dashboard_data()
+    return render_template(
+        'index.html',
+        result=result,
+        rag_output=rag_output,
+        submitted_data={'title': title, 'description': description},
+        metrics=dashboard_data,
+        dashboard_data=dashboard_data,
+        user=current_user,
+    )
 
 
 if __name__ == '__main__':
