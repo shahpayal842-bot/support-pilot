@@ -1,77 +1,960 @@
 <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SupportPilot | Enterprise Analytics</title>
+    <title>SupportPilot | Enterprise Support Analytics</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
     <style>
-        :root { --ink:#172033; --muted:#6b778c; --line:#dce4ed; --canvas:#eef3f7; --surface:#fff; --navy:#18283f; --blue:#246bfe; --green:#159570; }
+        :root {
+            --bg: #eef3f8;
+            --panel: #ffffff;
+            --line: #dde6f0;
+            --text: #1f2a37;
+            --muted: #64748b;
+            --navy: #17253a;
+            --blue: #2d6df6;
+            --blue-soft: #edf4ff;
+            --green: #10a66a;
+            --green-soft: #ebfaf3;
+            --amber: #d38a1d;
+            --amber-soft: #fff7eb;
+            --red: #d95656;
+            --red-soft: #fdecec;
+        }
+
         * { box-sizing: border-box; }
-        body { margin:0; background:var(--canvas); color:var(--ink); font-family:Inter,"Segoe UI",sans-serif; }
-        .sidebar { position:fixed; inset:0 auto 0 0; width:238px; padding:24px 16px; background:var(--navy); color:#dbe7f4; z-index:3; }
-        .brand { padding:0 12px 28px; } .brand-icon { width:38px; height:38px; display:grid; place-items:center; border-radius:10px; background:#2f72ff; color:#fff; font-size:1.3rem; }
-        .brand small { color:#8fa5be; } .nav-link { display:flex; gap:12px; align-items:center; margin:4px 0; padding:11px 12px; color:#aebfd2; border-radius:8px; font-size:.9rem; }
-        .nav-link:hover,.nav-link.active { background:rgba(72,129,255,.2); color:#fff; } .nav-link i { width:18px; }
-        .main-content { margin-left:238px; padding:22px 32px 40px; } .topbar { display:flex; justify-content:space-between; gap:18px; align-items:center; margin-bottom:24px; }
-        .page-title { margin:0; font-size:1.35rem; font-weight:700; } .eyebrow { color:var(--muted); font-size:.77rem; text-transform:uppercase; letter-spacing:.08em; font-weight:700; }
-        .top-actions { display:flex; align-items:center; gap:14px; } .search-box { width:250px; position:relative; } .search-box i { position:absolute; left:12px; top:10px; color:var(--muted); }
-        .search-box input { width:100%; height:38px; padding-left:34px; border:1px solid var(--line); border-radius:8px; background:#fff; font-size:.85rem; }
-        .system-status { padding:8px 11px; border:1px solid #bde5d5; border-radius:7px; color:var(--green); background:#effbf6; font-size:.78rem; font-weight:700; white-space:nowrap; }
-        .icon-button { border:0; background:transparent; color:var(--muted); font-size:1.2rem; } .user-pill { display:flex; align-items:center; gap:9px; padding-left:12px; border-left:1px solid var(--line); font-size:.85rem; font-weight:700; white-space:nowrap; }
-        .avatar { width:32px; height:32px; display:grid; place-items:center; border-radius:50%; background:#dbe7ff; color:var(--blue); }
-        .kpi-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:16px; margin-bottom:22px; } .panel,.kpi { border:1px solid var(--line); border-radius:10px; background:var(--surface); box-shadow:0 3px 12px rgba(23,32,51,.035); }
-        .kpi { padding:17px 18px; } .kpi-label { color:var(--muted); font-size:.8rem; font-weight:600; } .kpi-value { margin:5px 0 8px; font-size:1.65rem; font-weight:750; }
-        .trend { padding:3px 7px; border-radius:5px; background:#e8f8f1; color:var(--green); font-size:.7rem; font-weight:700; } .trend.warn { background:#fff4e4; color:#b36b12; } .kpi-foot { color:var(--muted); font-size:.72rem; }
-        .chart-grid { display:grid; grid-template-columns:1.3fr 1fr; gap:16px; margin-bottom:22px; } .panel-header { display:flex; justify-content:space-between; align-items:center; padding:16px 18px 0; }
-        .panel-title { margin:0; font-size:.95rem; font-weight:750; } .panel-subtitle { color:var(--muted); font-size:.74rem; } .chart-wrap { height:215px; padding:8px 18px 16px; }
-        .processing-grid { display:grid; grid-template-columns:minmax(280px,.8fr) minmax(0,1.2fr); gap:16px; margin-bottom:22px; } .panel-body { padding:18px; }
-        .form-label { color:var(--muted); font-size:.77rem; font-weight:700; } .form-control { border-color:var(--line); border-radius:7px; font-size:.85rem; padding:10px 12px; }
-        .form-control:focus { border-color:#8baeff; box-shadow:0 0 0 3px rgba(36,107,254,.12); } .quick-tests { display:flex; flex-wrap:wrap; gap:6px; margin:12px 0 16px; }
-        .quick-test { border:1px solid #cad8ee; border-radius:6px; background:#f5f8fd; color:#41618d; font-size:.72rem; padding:6px 8px; } .quick-test:hover { border-color:var(--blue); color:var(--blue); }
-        .btn-primary { background:var(--blue); border-color:var(--blue); } .workflow { display:grid; grid-template-columns:repeat(4,1fr); gap:7px; margin-bottom:18px; }
-        .workflow-step { min-height:83px; padding:10px 8px; border:1px solid var(--line); border-radius:8px; text-align:center; background:#fafcfe; } .step-number { width:25px; height:25px; display:grid; place-items:center; margin:0 auto 7px; border-radius:50%; background:var(--blue); color:#fff; font-size:.75rem; font-weight:800; }
-        .workflow-step span { display:block; color:var(--ink); font-size:.7rem; line-height:1.25; font-weight:700; } .section-label { display:block; margin:14px 0 8px; color:var(--muted); font-size:.72rem; font-weight:800; letter-spacing:.04em; text-transform:uppercase; }
-        .kb-item { display:flex; justify-content:space-between; align-items:center; gap:12px; padding:9px 11px; margin-bottom:6px; border:1px solid var(--line); border-radius:7px; background:#fbfcfe; } .kb-title { font-size:.77rem; font-weight:700; } .kb-meta { color:var(--muted); font-size:.68rem; }
-        .relevance { color:var(--green); background:#e8f8f1; border-radius:5px; padding:4px 7px; font-size:.68rem; font-weight:800; white-space:nowrap; } .resolution { max-height:190px; overflow:auto; padding:10px 12px 10px 29px; border:1px solid var(--line); border-radius:7px; background:#f8fafc; color:#37445a; font-size:.76rem; line-height:1.5; }
-        .resolution li { padding:4px 0; } .resolution-actions { display:flex; gap:8px; margin-top:9px; } .resolution-actions button { font-size:.74rem; } .empty-state { padding:26px 10px; color:var(--muted); text-align:center; font-size:.8rem; }
-        .table-panel { overflow:hidden; } .table-responsive { padding:0 12px 8px; } .ticket-table { width:100%; margin:12px 0 0; vertical-align:middle; font-size:.78rem; }
-        .ticket-table th { padding:10px 8px; color:var(--muted); border-bottom:1px solid var(--line); font-size:.68rem; text-transform:uppercase; letter-spacing:.04em; white-space:nowrap; } .ticket-table td { padding:12px 8px; border-bottom:1px solid #edf1f5; }
-        .ticket-table tr:last-child td { border-bottom:0; } .ticket-id { color:var(--blue); font-weight:750; } .subject { max-width:240px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-weight:650; }
-        .priority,.status { display:inline-block; padding:4px 7px; border-radius:5px; font-size:.67rem; font-weight:750; } .priority.p1 { color:#a43737; background:#fdeaea; } .priority.p2 { color:#a96611; background:#fff3df; } .priority.p3 { color:#55711c; background:#f0f8df; } .priority.p4 { color:#48627d; background:#eaf1f8; }
-        .status { color:#47708f; background:#edf5fb; } .table-action { color:var(--muted); border:0; background:transparent; font-size:1rem; }
-        @media (max-width:1100px) { .kpi-grid { grid-template-columns:repeat(2,1fr); } .top-actions .search-box { width:180px; } }
-        @media (max-width:850px) { .sidebar { position:static; width:100%; height:auto; } .main-content { margin-left:0; padding:18px; } .chart-grid,.processing-grid { grid-template-columns:1fr; } .topbar { align-items:flex-start; flex-direction:column; } .top-actions { width:100%; flex-wrap:wrap; } .search-box { flex:1; } }
-        @media (max-width:520px) { .kpi-grid { grid-template-columns:1fr; } .workflow { grid-template-columns:repeat(2,1fr); } .user-pill { border-left:0; padding-left:0; } }
-+    </style>
-+</head>
-+<body>
-+    <aside class="sidebar d-flex flex-column">
-+        <div class="brand d-flex align-items-center gap-2"><div class="brand-icon"><i class="bi bi-hexagon-fill"></i></div><div><strong class="d-block text-white">SupportPilot</strong><small>Enterprise Support AI</small></div></div>
-+        <div class="eyebrow px-2 mb-2" style="color:#6f89a6">Workspace</div>
-+        <nav class="nav flex-column"><a class="nav-link active" href="{{ url_for('dashboard') }}"><i class="bi bi-grid-1x2-fill"></i>Overview</a><a class="nav-link" href="#recent-tickets"><i class="bi bi-ticket-perforated"></i>Tickets</a><a class="nav-link" href="#processing"><i class="bi bi-cpu"></i>AI Resolution</a><a class="nav-link" href="#analytics"><i class="bi bi-bar-chart-line"></i>Analytics</a><a class="nav-link" href="#settings"><i class="bi bi-sliders2"></i>Settings</a></nav>
-+        <div class="mt-auto"><div class="p-3 mb-3" style="border:1px solid #2f4662;border-radius:8px;background:#203650"><small style="color:#8fa5be">AI ENGINE</small><div class="text-white small mt-1"><i class="bi bi-circle-fill text-success me-1" style="font-size:.5rem"></i>Online and ready</div></div><a href="{{ url_for('logout') }}" class="nav-link"><i class="bi bi-box-arrow-right"></i>Sign out</a></div>
-+    </aside>
-+    <main class="main-content">
-+        <header class="topbar"><div><div class="eyebrow">Operations center</div><h1 class="page-title">Support analytics</h1></div><div class="top-actions"><div class="search-box"><i class="bi bi-search"></i><input id="ticket-search" type="search" placeholder="Search tickets..."></div><span class="system-status"><i class="bi bi-check-circle-fill me-1"></i>All Systems Operational</span><button class="icon-button" type="button" aria-label="Notifications"><i class="bi bi-bell"></i></button><div class="user-pill"><span class="avatar"><i class="bi bi-person"></i></span><span>{{ user.name }}</span><i class="bi bi-chevron-down text-muted"></i></div></div></header>
-+        <section class="kpi-grid" aria-label="Support metrics"><article class="kpi"><span class="kpi-label">Total Tickets</span><div class="kpi-value">{{ dashboard_data.total_tickets }}</div><span class="trend">+4.2%</span> <span class="kpi-foot">vs. last period</span></article><article class="kpi"><span class="kpi-label">Resolved Rate</span><div class="kpi-value">{{ dashboard_data.resolution_rate }}%</div><span class="trend">+2.8%</span> <span class="kpi-foot">vs. last period</span></article><article class="kpi"><span class="kpi-label">Escalation Rate</span><div class="kpi-value">{{ dashboard_data.escalation_rate }}%</div><span class="trend warn">-1.4%</span> <span class="kpi-foot">fewer escalations</span></article><article class="kpi"><span class="kpi-label">Avg. Response Time</span><div class="kpi-value">{{ dashboard_data.avg_response_time }}</div><span class="trend">-0.6s</span> <span class="kpi-foot">faster than average</span></article></section>
-+        <section id="analytics" class="chart-grid"><article class="panel"><div class="panel-header"><div><h2 class="panel-title">Ticket Volume by Category</h2><span class="panel-subtitle">Distribution across support queues</span></div><i class="bi bi-three-dots text-muted"></i></div><div class="chart-wrap"><canvas id="category-chart"></canvas></div></article><article class="panel"><div class="panel-header"><div><h2 class="panel-title">Priority Distribution</h2><span class="panel-subtitle">Current ticket severity mix</span></div><i class="bi bi-three-dots text-muted"></i></div><div class="chart-wrap"><canvas id="priority-chart"></canvas></div></article></section>
-+        <section id="processing" class="processing-grid"><article class="panel"><div class="panel-header"><div><h2 class="panel-title">Ticket Processing</h2><span class="panel-subtitle">Submit a ticket for AI-powered resolution</span></div><span class="badge text-bg-primary">Milestone 2</span></div><div class="panel-body"><form action="{{ url_for('submit_ticket') }}" method="post"><label class="form-label" for="ticket-title">Ticket title</label><input class="form-control mb-3" id="ticket-title" name="title" value="{{ submitted_data.title if submitted_data else '' }}" placeholder="e.g. VPN connection keeps failing" required><label class="form-label" for="ticket-description">Description</label><textarea class="form-control" id="ticket-description" name="description" rows="5" placeholder="Describe the issue and any error messages..." required>{{ submitted_data.description if submitted_data else '' }}</textarea><div class="section-label mb-1">Quick test tickets</div><div class="quick-tests"><button class="quick-test" type="button" data-title="VPN connection issue" data-description="Unable to connect to the corporate VPN after restarting.">VPN issue</button><button class="quick-test" type="button" data-title="Password reset request" data-description="I am locked out of my account and need a password reset.">Password reset</button><button class="quick-test" type="button" data-title="Laptop screen problem" data-description="The laptop screen is flickering and difficult to read.">Hardware issue</button></div><button class="btn btn-primary w-100" type="submit"><i class="bi bi-stars me-1"></i>Analyze and resolve ticket</button></form>{% if result %}<div class="section-label">Milestone 1 classification</div><div class="d-flex gap-2 flex-wrap"><span class="priority p3">{{ result.category }}</span><span class="priority p2">{{ result.priority }}</span><span class="status">{{ result.severity }}</span></div>{% endif %}</div></article>
-+            <article class="panel"><div class="panel-header"><div><h2 class="panel-title">RAG Resolution Engine</h2><span class="panel-subtitle">Retrieval-augmented response workflow</span></div><span class="system-status">Ready</span></div><div class="panel-body"><div class="workflow"><div class="workflow-step"><div class="step-number">1</div><span>Ticket<br>Analysis</span></div><div class="workflow-step"><div class="step-number">2</div><span>Knowledge<br>Retrieval</span></div><div class="workflow-step"><div class="step-number">3</div><span>Context<br>Augmentation</span></div><div class="workflow-step"><div class="step-number">4</div><span>Response<br>Generation</span></div></div>{% if rag_output %}<span class="section-label">Retrieved KB articles</span>{% for doc in rag_output.retrieved_documents %}<div class="kb-item"><div><div class="kb-title">{{ doc.title }}</div><div class="kb-meta">{{ doc.category }} · {{ doc.id }}</div></div><span class="relevance">{{ (doc.score * 100)|round|int }}% relevance</span></div>{% endfor %}<span class="section-label">Generated resolution</span><ol class="resolution">{% for step in rag_output.resolution_steps %}<li>{{ step[step.find('. ') + 2:] if '. ' in step else step }}</li>{% endfor %}</ol><div class="resolution-actions"><button class="btn btn-sm btn-outline-primary" id="copy-solution" type="button"><i class="bi bi-copy me-1"></i>Copy solution</button><button class="btn btn-sm btn-outline-danger" type="button" id="escalate-ticket"><i class="bi bi-arrow-up-right me-1"></i>Escalate to Tier-2</button></div>{% else %}<div class="empty-state"><i class="bi bi-diagram-3 fs-2 d-block mb-2"></i>Submit a ticket to activate retrieval and generate a cited resolution.</div>{% endif %}</div></article></section>
-+        <section id="recent-tickets" class="panel table-panel"><div class="panel-header"><div><h2 class="panel-title">Recent Tickets</h2><span class="panel-subtitle">Latest activity across your support workspace</span></div><button class="btn btn-sm btn-outline-secondary"><i class="bi bi-download me-1"></i>Export</button></div><div class="table-responsive"><table class="ticket-table"><thead><tr><th>Ticket ID</th><th>Subject</th><th>Category</th><th>Priority</th><th>Status</th><th>Action</th></tr></thead><tbody id="ticket-rows">{% for ticket in dashboard_data.recent_tickets %}<tr><td class="ticket-id">#{{ ticket.id }}</td><td class="subject" title="{{ ticket.subject }}">{{ ticket.subject }}</td><td>{{ ticket.category }}</td><td><span class="priority {{ ticket.priority|lower }}">{{ ticket.priority }}</span></td><td><span class="status">{{ ticket.status }}</span></td><td><button class="table-action" type="button" aria-label="View ticket"><i class="bi bi-arrow-up-right"></i></button></td></tr>{% else %}<tr><td colspan="6" class="empty-state">No ticket data available.</td></tr>{% endfor %}</tbody></table></div></section>
-+    </main>
-+    <script>
-+        const categoryData = {{ dashboard_data.categories|tojson }};
-+        const priorityData = {{ dashboard_data.priorities|tojson }};
-+        const chartOptions = { responsive:true, maintainAspectRatio:false, plugins:{ legend:{display:false} }, scales:{ y:{beginAtZero:true,ticks:{precision:0},grid:{color:'#edf1f5'}}, x:{grid:{display:false}} } };
-+        new Chart(document.getElementById('category-chart'), { type:'bar', data:{labels:Object.keys(categoryData),datasets:[{data:Object.values(categoryData),backgroundColor:['#5b8def','#43b7a1','#e9ad57','#8e7de3','#e77d89','#6eb2d6'],borderRadius:5,borderSkipped:false}]}, options:chartOptions });
-+        new Chart(document.getElementById('priority-chart'), { type:'doughnut', data:{labels:['P1 Critical','P2 Major','P3 Moderate','P4 Minor'],datasets:[{data:Object.values(priorityData),backgroundColor:['#d95858','#ef9d39','#a6c85b','#79a4c7'],borderWidth:3,borderColor:'#fff'}]}, options:{responsive:true,maintainAspectRatio:false,cutout:'66%',plugins:{legend:{position:'right',labels:{usePointStyle:true,boxWidth:8,font:{size:11}}}}} });
-+        document.querySelectorAll('.quick-test').forEach(button => button.addEventListener('click', () => { document.getElementById('ticket-title').value=button.dataset.title; document.getElementById('ticket-description').value=button.dataset.description; }));
-+        const copyButton=document.getElementById('copy-solution'); if(copyButton) copyButton.addEventListener('click',()=>{navigator.clipboard.writeText(document.querySelector('.resolution').innerText).then(()=>{copyButton.innerHTML='<i class="bi bi-check me-1"></i>Copied';setTimeout(()=>copyButton.innerHTML='<i class="bi bi-copy me-1"></i>Copy solution',1600);});});
-+        const escalateButton=document.getElementById('escalate-ticket'); if(escalateButton) escalateButton.addEventListener('click',()=>{escalateButton.innerHTML='<i class="bi bi-check me-1"></i>Escalation queued';escalateButton.disabled=true;});
-+        document.getElementById('ticket-search').addEventListener('input',event=>{const query=event.target.value.toLowerCase();document.querySelectorAll('#ticket-rows tr').forEach(row=>{row.hidden=query&&!row.innerText.toLowerCase().includes(query);});});
-+    </script>
-+</body>
-+</html>
+        body {
+            margin: 0;
+            font-family: "Segoe UI", Tahoma, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+        }
+
+        .sidebar {
+            position: fixed;
+            inset: 0 auto 0 0;
+            width: 240px;
+            background: var(--navy);
+            color: #e4edf8;
+            padding: 22px 16px 18px;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 0 8px 28px;
+        }
+
+        .brand-mark {
+            width: 38px;
+            height: 38px;
+            border-radius: 12px;
+            display: grid;
+            place-items: center;
+            background: linear-gradient(135deg, #5b8def, #2d6df6);
+            color: #fff;
+            font-size: 1.1rem;
+            box-shadow: 0 10px 18px rgba(45, 109, 246, 0.35);
+        }
+
+        .brand-name {
+            font-size: 1.1rem;
+            font-weight: 700;
+        }
+
+        .brand-subtext {
+            font-size: 0.72rem;
+            color: #90a3bb;
+        }
+
+        .sidebar-label {
+            font-size: 0.68rem;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: #8aa1bc;
+            padding: 0 10px 8px;
+        }
+
+        .nav-section {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .side-link {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            border-radius: 8px;
+            color: #dfeaf7;
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: background 0.2s ease;
+        }
+
+        .side-link:hover,
+        .side-link.active {
+            background: rgba(121, 161, 255, 0.14);
+            color: #fff;
+        }
+
+        .side-link i { width: 16px; }
+
+        .sidebar-card {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(144, 163, 187, 0.2);
+            border-radius: 10px;
+            padding: 12px 10px;
+            margin-top: 18px;
+        }
+
+        .sidebar-card small {
+            color: #8fa5c1;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .status-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: #d8f9eb;
+            font-size: 0.82rem;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--green);
+            box-shadow: 0 0 0 4px rgba(16,166,106,0.18);
+        }
+
+        .main-content {
+            margin-left: 240px;
+            padding: 22px 28px 32px;
+        }
+
+        .topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .topbar-copy {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .eyebrow {
+            font-size: 0.72rem;
+            font-weight: 700;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--muted);
+        }
+
+        .page-title {
+            margin: 0;
+            font-size: clamp(1.5rem, 2vw, 2rem);
+            font-weight: 700;
+        }
+
+        .toolbar {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .search-box {
+            position: relative;
+            min-width: 220px;
+        }
+
+        .search-box i {
+            position: absolute;
+            left: 12px;
+            top: 11px;
+            color: var(--muted);
+        }
+
+        .search-box input {
+            width: 100%;
+            height: 40px;
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            background: var(--panel);
+            padding-left: 36px;
+            font-size: 0.88rem;
+            outline: none;
+        }
+
+        .search-box input:focus {
+            border-color: #99b5ff;
+            box-shadow: 0 0 0 3px rgba(45,109,246,0.1);
+        }
+
+        .ops-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            border-radius: 8px;
+            background: var(--green-soft);
+            border: 1px solid rgba(16,166,106,0.18);
+            color: var(--green);
+            font-size: 0.78rem;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+        .icon-btn {
+            width: 38px;
+            height: 38px;
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            background: var(--panel);
+            color: var(--muted);
+        }
+
+        .userbox {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding-left: 12px;
+            border-left: 1px solid var(--line);
+            font-weight: 700;
+        }
+
+        .avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: #dfeaff;
+            display: grid;
+            place-items: center;
+            color: var(--blue);
+        }
+
+        .kpi-row {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 16px;
+            margin-bottom: 18px;
+        }
+
+        .kpi-card {
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            padding: 18px 18px 14px;
+            box-shadow: 0 8px 22px rgba(20, 30, 40, 0.02);
+        }
+
+        .kpi-label {
+            color: var(--muted);
+            font-size: 0.78rem;
+            font-weight: 600;
+        }
+
+        .kpi-value {
+            margin: 8px 0 10px;
+            font-size: clamp(1.4rem, 2vw, 2rem);
+            font-weight: 700;
+            letter-spacing: -0.03em;
+        }
+
+        .trend {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 7px;
+            border-radius: 6px;
+            background: var(--green-soft);
+            color: var(--green);
+            font-size: 0.7rem;
+            font-weight: 700;
+        }
+
+        .trend.warn {
+            background: var(--amber-soft);
+            color: var(--amber);
+        }
+
+        .kpi-foot {
+            margin-left: 8px;
+            font-size: 0.72rem;
+            color: var(--muted);
+        }
+
+        .chart-grid {
+            display: grid;
+            grid-template-columns: 1.5fr 1fr;
+            gap: 16px;
+            margin-bottom: 18px;
+        }
+
+        .panel {
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            box-shadow: 0 8px 22px rgba(20, 30, 40, 0.02);
+        }
+
+        .panel-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            padding: 16px 18px 0;
+        }
+
+        .panel-title {
+            margin: 0;
+            font-size: 1rem;
+            font-weight: 700;
+        }
+
+        .panel-subtitle {
+            display: block;
+            margin-top: 4px;
+            font-size: 0.75rem;
+            color: var(--muted);
+        }
+
+        .chart-wrap {
+            height: 240px;
+            padding: 10px 18px 18px;
+        }
+
+        .tabs-wrap {
+            margin-bottom: 18px;
+            border-bottom: 1px solid var(--line);
+        }
+
+        .nav-tabs {
+            border-bottom: none;
+            gap: 8px;
+        }
+
+        .nav-tabs .nav-link {
+            border: 1px solid transparent;
+            border-radius: 10px 10px 0 0;
+            color: var(--muted);
+            font-weight: 600;
+            padding: 10px 14px;
+        }
+
+        .nav-tabs .nav-link.active {
+            background: var(--panel);
+            border-color: var(--line) var(--line) transparent;
+            color: var(--text);
+        }
+
+        .two-col-layout {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+            gap: 16px;
+        }
+
+        .panel-body {
+            padding: 18px;
+        }
+
+        .form-label {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--muted);
+            margin-bottom: 8px;
+        }
+
+        .form-control {
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            padding: 10px 12px;
+            font-size: 0.9rem;
+        }
+
+        .form-control:focus {
+            border-color: #9bb9ff;
+            box-shadow: 0 0 0 3px rgba(45,109,246,0.1);
+        }
+
+        .quick-tests {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin: 10px 0 16px;
+        }
+
+        .quick-test {
+            border: 1px solid #dfe8f8;
+            background: #f5f9ff;
+            color: #3a5ea8;
+            border-radius: 8px;
+            padding: 6px 10px;
+            font-size: 0.72rem;
+            font-weight: 600;
+        }
+
+        .btn-primary {
+            background: var(--blue);
+            border-color: var(--blue);
+        }
+
+        .workflow {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 8px;
+            margin-bottom: 18px;
+        }
+
+        .workflow-step {
+            text-align: center;
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            background: #fafcff;
+            min-height: 88px;
+            padding: 10px 8px;
+        }
+
+        .step-number {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: grid;
+            place-items: center;
+            margin: 0 auto 8px;
+            background: var(--blue);
+            color: white;
+            font-size: 0.78rem;
+            font-weight: 700;
+        }
+
+        .workflow-step span {
+            display: block;
+            font-size: 0.7rem;
+            line-height: 1.2;
+            font-weight: 700;
+        }
+
+        .section-label {
+            display: block;
+            margin: 18px 0 10px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--muted);
+        }
+
+        .kb-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            background: #fbfcff;
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            padding: 10px 12px;
+            margin-bottom: 8px;
+        }
+
+        .kb-title {
+            font-size: 0.8rem;
+            font-weight: 700;
+        }
+
+        .kb-meta {
+            font-size: 0.68rem;
+            color: var(--muted);
+        }
+
+        .relevance {
+            display: inline-flex;
+            align-items: center;
+            background: var(--green-soft);
+            color: var(--green);
+            border-radius: 6px;
+            padding: 5px 8px;
+            font-size: 0.68rem;
+            font-weight: 700;
+        }
+
+        .resolution {
+            padding: 10px 16px 10px 24px;
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            background: #f8fafc;
+            margin: 0;
+            color: #334155;
+            font-size: 0.8rem;
+            line-height: 1.6;
+        }
+
+        .resolution-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .empty-state {
+            padding: 30px 12px;
+            text-align: center;
+            color: var(--muted);
+            font-size: 0.82rem;
+        }
+
+        .table-panel {
+            overflow: hidden;
+        }
+
+        .table-responsive {
+            overflow-x: auto;
+            padding: 0 12px 12px;
+        }
+
+        table.ticket-table {
+            width: 100%;
+            min-width: 720px;
+            border-collapse: collapse;
+            font-size: 0.82rem;
+        }
+
+        .ticket-table th {
+            text-align: left;
+            font-size: 0.68rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--muted);
+            font-weight: 700;
+            padding: 12px 8px;
+            border-bottom: 1px solid var(--line);
+        }
+
+        .ticket-table td {
+            padding: 14px 8px;
+            border-bottom: 1px solid #edf2f7;
+            vertical-align: middle;
+        }
+
+        .ticket-id {
+            color: var(--blue);
+            font-weight: 700;
+        }
+
+        .subject {
+            font-weight: 600;
+            max-width: 240px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .priority-badge,
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            border-radius: 6px;
+            padding: 4px 8px;
+            font-size: 0.68rem;
+            font-weight: 700;
+        }
+
+        .priority-badge.p1 { background: var(--red-soft); color: var(--red); }
+        .priority-badge.p2 { background: var(--amber-soft); color: var(--amber); }
+        .priority-badge.p3 { background: #eef8df; color: #62811c; }
+        .priority-badge.p4 { background: #edf3fd; color: #446286; }
+
+        .status-badge { background: #edf5ff; color: #38679d; }
+
+        .table-action {
+            border: none;
+            background: transparent;
+            color: var(--muted);
+            font-size: 1rem;
+        }
+
+        .hidden-row { display: none; }
+
+        @media (max-width: 1100px) {
+            .kpi-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .chart-grid { grid-template-columns: 1fr; }
+        }
+
+        @media (max-width: 900px) {
+            .sidebar {
+                position: static;
+                width: 100%;
+            }
+            .main-content {
+                margin-left: 0;
+                padding: 18px;
+            }
+            .two-col-layout { grid-template-columns: 1fr; }
+            .toolbar { flex-wrap: wrap; }
+        }
+
+        @media (max-width: 560px) {
+            .kpi-row { grid-template-columns: 1fr; }
+            .workflow { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .topbar { align-items: flex-start; flex-direction: column; }
+            .search-box { width: 100%; min-width: 0; }
+            .userbox { border-left: none; padding-left: 0; }
+        }
+    </style>
+</head>
+<body>
+    <aside class="sidebar">
+        <div class="brand">
+            <div class="brand-mark"><i class="bi bi-hexagon-fill"></i></div>
+            <div>
+                <div class="brand-name">SupportPilot</div>
+                <div class="brand-subtext">Enterprise Support AI</div>
+            </div>
+        </div>
+
+        <div class="sidebar-label">Workspace</div>
+        <nav class="nav-section">
+            <a href="#" class="side-link active"><i class="bi bi-grid-1x2-fill"></i>Overview</a>
+            <a href="#tickets-tab" class="side-link"><i class="bi bi-ticket-perforated"></i>Tickets</a>
+            <a href="#resolution-tab" class="side-link"><i class="bi bi-cpu"></i>AI Resolution</a>
+            <a href="#" class="side-link"><i class="bi bi-bar-chart-line"></i>Analytics</a>
+            <a href="#" class="side-link"><i class="bi bi-sliders2"></i>Settings</a>
+        </nav>
+
+        <div class="sidebar-card">
+            <small>AI Engine</small>
+            <div class="status-indicator mt-2"><span class="status-dot"></span>Online and ready</div>
+        </div>
+
+        <div class="mt-3">
+            <a href="{{ url_for('logout') }}" class="side-link"><i class="bi bi-box-arrow-right"></i>Sign out</a>
+        </div>
+    </aside>
+
+    <main class="main-content">
+        <div class="tabs-wrap">
+            <ul class="nav nav-tabs" role="tablist">
+                <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#overview-tab">Overview</a></li>
+                <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tickets-tab">Tickets</a></li>
+                <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#resolution-tab">AI Resolution</a></li>
+            </ul>
+        </div>
+
+        <div class="tab-content">
+            <div class="tab-pane fade show active" id="overview-tab">
+                <header class="topbar">
+                    <div class="topbar-copy">
+                        <div class="eyebrow">Operations Center</div>
+                        <h1 class="page-title">Support analytics</h1>
+                    </div>
+
+                    <div class="toolbar">
+                        <div class="search-box">
+                            <i class="bi bi-search"></i>
+                            <input id="ticket-search" type="search" placeholder="Search tickets...">
+                        </div>
+                        <div class="ops-pill"><i class="bi bi-check-circle-fill"></i>All systems operational</div>
+                        <button class="icon-btn" type="button" aria-label="Notifications"><i class="bi bi-bell"></i></button>
+                        <div class="userbox">
+                            <span class="avatar"><i class="bi bi-person"></i></span>
+                            <span>{{ user.name }}</span>
+                            <i class="bi bi-chevron-down text-muted"></i>
+                        </div>
+                    </div>
+                </header>
+
+                <section class="kpi-row" aria-label="support metrics">
+                    <article class="kpi-card">
+                        <div class="kpi-label">Total Tickets</div>
+                        <div class="kpi-value">{{ dashboard_data.total_tickets }}</div>
+                        <span class="trend">+4.2%</span><span class="kpi-foot">vs last period</span>
+                    </article>
+
+                    <article class="kpi-card">
+                        <div class="kpi-label">Resolved Rate</div>
+                        <div class="kpi-value">{{ dashboard_data.resolution_rate }}%</div>
+                        <span class="trend">+2.8%</span><span class="kpi-foot">vs last period</span>
+                    </article>
+
+                    <article class="kpi-card">
+                        <div class="kpi-label">Escalation Rate</div>
+                        <div class="kpi-value">{{ dashboard_data.escalation_rate }}%</div>
+                        <span class="trend warn">-1.4%</span><span class="kpi-foot">fewer escalations</span>
+                    </article>
+
+                    <article class="kpi-card">
+                        <div class="kpi-label">Avg. Response Time</div>
+                        <div class="kpi-value">{{ dashboard_data.avg_response_time }}</div>
+                        <span class="trend">-0.6s</span><span class="kpi-foot">faster than target</span>
+                    </article>
+                </section>
+
+                <section class="chart-grid">
+                    <article class="panel">
+                        <div class="panel-header">
+                            <div>
+                                <h2 class="panel-title">Ticket Volume by Category</h2>
+                                <span class="panel-subtitle">Distribution across support queues</span>
+                            </div>
+                            <i class="bi bi-three-dots text-muted"></i>
+                        </div>
+                        <div class="chart-wrap"><canvas id="category-chart"></canvas></div>
+                    </article>
+
+                    <article class="panel">
+                        <div class="panel-header">
+                            <div>
+                                <h2 class="panel-title">Priority Distribution</h2>
+                                <span class="panel-subtitle">Current severity mix</span>
+                            </div>
+                            <i class="bi bi-three-dots text-muted"></i>
+                        </div>
+                        <div class="chart-wrap"><canvas id="priority-chart"></canvas></div>
+                    </article>
+                </section>
+            </div>
+
+            <div class="tab-pane fade" id="tickets-tab">
+                <section class="panel table-panel">
+                    <div class="panel-header">
+                        <div>
+                            <h2 class="panel-title">Recent Tickets</h2>
+                            <span class="panel-subtitle">Latest activity across the support workspace</span>
+                        </div>
+                        <button class="btn btn-sm btn-outline-secondary" type="button"><i class="bi bi-download me-1"></i>Export</button>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="ticket-table">
+                            <thead>
+                                <tr>
+                                    <th>Ticket ID</th>
+                                    <th>Subject</th>
+                                    <th>Category</th>
+                                    <th>Priority</th>
+                                    <th>Status</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ticket-rows">
+                                {% for ticket in dashboard_data.recent_tickets %}
+                                    <tr class="ticket-row">
+                                        <td class="ticket-id">#{{ ticket.id }}</td>
+                                        <td class="subject" title="{{ ticket.subject }}">{{ ticket.subject }}</td>
+                                        <td>{{ ticket.category }}</td>
+                                        <td><span class="priority-badge {{ ticket.priority|lower }}">{{ ticket.priority }}</span></td>
+                                        <td><span class="status-badge">{{ ticket.status }}</span></td>
+                                        <td><button class="table-action" type="button" aria-label="Open ticket"><i class="bi bi-arrow-up-right"></i></button></td>
+                                    </tr>
+                                {% else %}
+                                    <tr><td colspan="6" class="empty-state">No ticket data available.</td></tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+            </div>
+
+            <div class="tab-pane fade" id="resolution-tab">
+                <div class="two-col-layout">
+                    <article class="panel">
+                        <div class="panel-header">
+                            <div>
+                                <h2 class="panel-title">Ticket Submission</h2>
+                                <span class="panel-subtitle">Create a new support request</span>
+                            </div>
+                            <span class="badge bg-primary-subtle text-primary">Milestone 2</span>
+                        </div>
+                        <div class="panel-body">
+                            <form action="{{ url_for('submit_ticket') }}" method="post">
+                                <label class="form-label" for="ticket-title">Ticket title</label>
+                                <input class="form-control mb-3" id="ticket-title" name="title" value="{{ submitted_data.title if submitted_data else '' }}" placeholder="e.g. VPN connection keeps failing" required>
+
+                                <label class="form-label" for="ticket-description">Description</label>
+                                <textarea class="form-control" id="ticket-description" name="description" rows="5" placeholder="Describe the issue and any error messages..." required>{{ submitted_data.description if submitted_data else '' }}</textarea>
+
+                                <div class="section-label">Quick test tickets</div>
+                                <div class="quick-tests">
+                                    <button class="quick-test" type="button" data-title="VPN connection issue" data-description="Unable to connect to the corporate VPN after restarting.">VPN issue</button>
+                                    <button class="quick-test" type="button" data-title="Password reset request" data-description="I am locked out of my account and need a password reset.">Password reset</button>
+                                    <button class="quick-test" type="button" data-title="Laptop screen problem" data-description="The laptop screen is flickering and difficult to read.">Hardware issue</button>
+                                </div>
+
+                                <button class="btn btn-primary w-100" type="submit"><i class="bi bi-stars me-1"></i>Analyze and resolve ticket</button>
+                            </form>
+
+                            {% if result %}
+                                <div class="section-label">Milestone 1 classification</div>
+                                <div class="d-flex gap-2 flex-wrap">
+                                    <span class="priority-badge p3">{{ result.category }}</span>
+                                    <span class="priority-badge p2">{{ result.priority }}</span>
+                                    <span class="status-badge">{{ result.severity }}</span>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </article>
+
+                    <article class="panel">
+                        <div class="panel-header">
+                            <div>
+                                <h2 class="panel-title">AI Resolution Engine</h2>
+                                <span class="panel-subtitle">Retrieval-augmented troubleshooting</span>
+                            </div>
+                            <span class="ops-pill"><i class="bi bi-check-circle-fill"></i>Ready</span>
+                        </div>
+                        <div class="panel-body">
+                            <div class="workflow">
+                                <div class="workflow-step"><div class="step-number">1</div><span>Ticket<br>Analysis</span></div>
+                                <div class="workflow-step"><div class="step-number">2</div><span>Knowledge<br>Retrieval</span></div>
+                                <div class="workflow-step"><div class="step-number">3</div><span>Context<br>Augmentation</span></div>
+                                <div class="workflow-step"><div class="step-number">4</div><span>Response<br>Generation</span></div>
+                            </div>
+
+                            {% if rag_output %}
+                                <span class="section-label">Retrieved KB articles</span>
+                                {% for doc in rag_output.retrieved_documents %}
+                                    <div class="kb-item">
+                                        <div>
+                                            <div class="kb-title">{{ doc.title }}</div>
+                                            <div class="kb-meta">{{ doc.category }} · {{ doc.id }}</div>
+                                        </div>
+                                        <span class="relevance">{{ (doc.score * 100)|round|int }}% relevance</span>
+                                    </div>
+                                {% endfor %}
+
+                                <span class="section-label">Generated resolution</span>
+                                <ol class="resolution">
+                                    {% for step in rag_output.resolution_steps %}
+                                        <li>{{ step }}</li>
+                                    {% endfor %}
+                                </ol>
+
+                                <div class="resolution-actions">
+                                    <button class="btn btn-sm btn-outline-primary" id="copy-solution" type="button"><i class="bi bi-copy me-1"></i>Copy solution</button>
+                                    <button class="btn btn-sm btn-outline-danger" id="escalate-ticket" type="button"><i class="bi bi-arrow-up-right me-1"></i>Escalate to Tier-2</button>
+                                </div>
+                            {% else %}
+                                <div class="empty-state"><i class="bi bi-diagram-3 fs-2 d-block mb-2"></i>Submit a ticket to activate retrieval and generate a cited response.</div>
+                            {% endif %}
+                        </div>
+                    </article>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const categoryData = {{ dashboard_data.category_distribution|tojson }};
+        const priorityData = {{ dashboard_data.priority_distribution|tojson }};
+
+        const chartOptions = {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: { precision: 0 },
+                    grid: { color: '#edf1f5' }
+                },
+                x: { grid: { display: false } }
+            }
+        };
+
+        if (document.getElementById('category-chart')) {
+            new Chart(document.getElementById('category-chart'), {
+                type: 'bar',
+                data: {
+                    labels: Object.keys(categoryData),
+                    datasets: [{
+                        data: Object.values(categoryData),
+                        backgroundColor: ['#5b8def', '#43b7a1', '#e9ad57', '#8e7de3', '#e77d89', '#6eb2d6'],
+                        borderRadius: 5,
+                        borderSkipped: false
+                    }]
+                },
+                options: chartOptions
+            });
+        }
+
+        if (document.getElementById('priority-chart')) {
+            new Chart(document.getElementById('priority-chart'), {
+                type: 'doughnut',
+                data: {
+                    labels: ['P1 Critical', 'P2 Major', 'P3 Moderate', 'P4 Minor'],
+                    datasets: [{
+                        data: Object.values(priorityData),
+                        backgroundColor: ['#d95858', '#ef9d39', '#a6c85b', '#79a4c7'],
+                        borderWidth: 3,
+                        borderColor: '#fff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '65%',
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                            labels: { usePointStyle: true, boxWidth: 8, font: { size: 11 } }
+                        }
+                    }
+                }
+            });
+        }
+
+        document.querySelectorAll('.quick-test').forEach((button) => {
+            button.addEventListener('click', () => {
+                document.getElementById('ticket-title').value = button.dataset.title;
+                document.getElementById('ticket-description').value = button.dataset.description;
+            });
+        });
+
+        const copyButton = document.getElementById('copy-solution');
+        if (copyButton) {
+            copyButton.addEventListener('click', () => {
+                const resolution = document.querySelector('.resolution');
+                if (!resolution) return;
+
+                navigator.clipboard.writeText(resolution.innerText).then(() => {
+                    copyButton.innerHTML = '<i class="bi bi-check me-1"></i>Copied';
+                    setTimeout(() => {
+                        copyButton.innerHTML = '<i class="bi bi-copy me-1"></i>Copy solution';
+                    }, 1400);
+                });
+            });
+        }
+
+        const escalateButton = document.getElementById('escalate-ticket');
+        if (escalateButton) {
+            escalateButton.addEventListener('click', () => {
+                escalateButton.innerHTML = '<i class="bi bi-check me-1"></i>Escalation queued';
+                escalateButton.disabled = true;
+            });
+        }
+
+        const searchInput = document.getElementById('ticket-search');
+        if (searchInput) {
+            searchInput.addEventListener('input', (event) => {
+                const query = event.target.value.trim().toLowerCase();
+                document.querySelectorAll('.ticket-row').forEach((row) => {
+                    const text = row.innerText.toLowerCase();
+                    row.classList.toggle('hidden-row', !!query && !text.includes(query));
+                });
+            });
+        }
+    </script>
+</body>
+</html>
