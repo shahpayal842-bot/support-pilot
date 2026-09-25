@@ -574,6 +574,39 @@
         .priority-badge.p3 { background: #eef8df; color: #62811c; }
         .priority-badge.p4 { background: #edf3fd; color: #446286; }
 
+        .classification-summary {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 10px;
+            padding: 12px;
+            background: #f7faff;
+            border: 1px solid #dce8f8;
+            border-radius: 8px;
+        }
+
+        .classification-item {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+            min-width: 0;
+        }
+
+        .classification-label {
+            color: var(--muted);
+            font-size: 0.68rem;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+        }
+
+        .classification-item strong {
+            overflow: hidden;
+            color: var(--navy);
+            font-size: 0.86rem;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
         .status-badge { background: #edf5ff; color: #38679d; }
 
         .table-action {
@@ -606,6 +639,7 @@
         @media (max-width: 560px) {
             .kpi-row { grid-template-columns: 1fr; }
             .workflow { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .classification-summary { grid-template-columns: 1fr; }
             .topbar { align-items: flex-start; flex-direction: column; }
             .search-box { width: 100%; min-width: 0; }
             .userbox { border-left: none; padding-left: 0; }
@@ -820,21 +854,54 @@
                             </div>
 
                             {% if rag_output %}
-                                <span class="section-label">Retrieved KB articles</span>
-                                {% for doc in rag_output.retrieved_documents %}
-                                    <div class="kb-item">
-                                        <div>
-                                            <div class="kb-title">{{ doc.title }}</div>
-                                            <div class="kb-meta">{{ doc.category }} · {{ doc.id }}</div>
-                                        </div>
-                                        <span class="relevance">{{ (doc.score * 100)|round|int }}% relevance</span>
+                                {% set diagnosis = rag_output.diagnosis|default({}, true) %}
+                                <div class="section-label">M1 ML Classification</div>
+                                <div class="classification-summary mb-3">
+                                    <div class="classification-item">
+                                        <span class="classification-label">Category</span>
+                                        <strong>{{ diagnosis.category|default(result.category if result else 'Unclassified', true) }}</strong>
                                     </div>
-                                {% endfor %}
+                                    <div class="classification-item">
+                                        <span class="classification-label">Severity</span>
+                                        <strong>{{ diagnosis.severity|default(result.severity if result else 'Unknown', true) }}</strong>
+                                    </div>
+                                    <div class="classification-item">
+                                        <span class="classification-label">Priority</span>
+                                        <strong>{{ diagnosis.priority|default(result.priority if result else 'N/A', true) }}</strong>
+                                    </div>
+                                </div>
 
-                                <span class="section-label">Generated resolution</span>
+                                <div class="d-flex flex-wrap gap-2 mb-3">
+                                    <span class="badge rounded-pill bg-primary-subtle text-primary">
+                                        <i class="bi bi-stars me-1"></i>
+                                        Confidence: {{ rag_output.confidence|default(diagnosis.confidence * 100 if diagnosis.confidence is defined else 0, true) }}%
+                                    </span>
+                                    {% if diagnosis.confidence is defined %}
+                                        <span class="badge rounded-pill bg-light text-secondary border">
+                                            ML diagnosis: {{ (diagnosis.confidence * 100)|round(1) }}%
+                                        </span>
+                                    {% endif %}
+                                </div>
+
+                                {% if rag_output.retrieved_documents %}
+                                    <div class="section-label">Retrieved KB Context</div>
+                                    {% for doc in rag_output.retrieved_documents %}
+                                        <div class="kb-item mb-2">
+                                            <div>
+                                                <div class="kb-title">{{ doc.title }}</div>
+                                                <div class="kb-meta">{{ doc.category }} · {{ doc.id }}</div>
+                                            </div>
+                                            <span class="relevance">{{ (doc.score * 100)|round|int }}% relevance</span>
+                                        </div>
+                                    {% endfor %}
+                                {% endif %}
+
+                                <div class="section-label mt-3">AI-Generated Resolution</div>
                                 <ol class="resolution">
-                                    {% for step in rag_output.resolution_steps %}
+                                    {% for step in rag_output.attempted_resolution|default(rag_output.resolution_steps, true) %}
                                         <li>{{ step }}</li>
+                                    {% else %}
+                                        <li>No resolution steps were generated for this ticket.</li>
                                     {% endfor %}
                                 </ol>
 
