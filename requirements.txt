@@ -1,0 +1,7 @@
+Flask
+requests
+python-dotenv
+scikit-learn
+Flask-Bcrypt
+Flask-JWT-Extended
+joblib

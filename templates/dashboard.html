@@ -1,0 +1,269 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>SupportPilot | Enterprise ITSM Portal</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+    <style>
+        :root {
+            --navy: #14233b;
+            --navy-soft: #1d3150;
+            --canvas: #f5f7fb;
+            --ink: #172238;
+            --muted: #718096;
+            --line: #e2e8f0;
+            --blue: #2563eb;
+            --teal: #0f9f8c;
+            --amber: #c98216;
+        }
+        * { box-sizing: border-box; }
+        body { margin: 0; background: var(--canvas); color: var(--ink); font-family: Inter, ui-sans-serif, system-ui, -apple-system, sans-serif; }
+        .app-shell { min-height: 100vh; }
+        .sidebar { width: 260px; min-height: 100vh; background: var(--navy); color: #dce7f5; }
+        .brand-mark { width: 40px; height: 40px; display: grid; place-items: center; border-radius: 10px; background: #2d72e8; box-shadow: 0 8px 18px rgba(45,114,232,.3); }
+        .brand-name { color: #fff; font-weight: 800; letter-spacing: -.02em; }
+        .brand-subtitle { color: #8ea4c1; font-size: .72rem; }
+        .sidebar-label { color: #7f96b5; font-size: .68rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
+        .sidebar .nav-pills .nav-link { display: flex; align-items: center; gap: 11px; padding: 11px 12px; margin: 3px 0; border-radius: 8px; color: #9fb2cb; font-size: .9rem; text-align: left; }
+        .sidebar .nav-pills .nav-link:hover { color: #fff; background: rgba(102, 153, 235, .12); }
+        .sidebar .nav-pills .nav-link.active { color: #fff; background: var(--navy-soft); box-shadow: inset 3px 0 0 #63a0ff; }
+        .sidebar .nav-pills .nav-link i { width: 19px; font-size: 1rem; }
+        .sidebar-footer { border-top: 1px solid rgba(207, 225, 246, .12); color: #8ea4c1; }
+        .main-content { min-width: 0; background: var(--canvas); }
+        .eyebrow { color: var(--blue); font-size: .7rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
+        .panel { background: #fff; border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 8px 24px rgba(28, 49, 77, .045); }
+        .metric-card { min-height: 126px; }
+        .metric-label { color: var(--muted); font-size: .76rem; font-weight: 700; }
+        .metric-value { margin-top: 7px; font-size: 1.75rem; font-weight: 800; letter-spacing: -.04em; }
+        .metric-icon { width: 38px; height: 38px; display: grid; place-items: center; border-radius: 9px; color: var(--blue); background: #edf4ff; }
+        .chart-panel { min-height: 320px; }
+        .chart-container { position: relative; height: 235px; }
+        .section-title { font-size: 1rem; font-weight: 800; }
+        .section-subtitle { color: var(--muted); font-size: .78rem; }
+        .quick-chip { border: 1px solid #cbdaf5; color: #2c5cae; background: #f5f8ff; border-radius: 999px; font-size: .76rem; font-weight: 700; padding: 7px 11px; transition: .18s ease; }
+        .quick-chip:hover { color: #fff; background: var(--blue); border-color: var(--blue); }
+        .form-label { color: #46566d; font-size: .78rem; font-weight: 700; }
+        textarea { min-height: 170px; resize: vertical; }
+        .desk-pane { min-height: 600px; }
+        .agent-output { max-height: 620px; overflow-y: auto; }
+        .output-placeholder { min-height: 440px; display: grid; place-items: center; color: var(--muted); text-align: center; }
+        .output-icon { width: 54px; height: 54px; display: grid; place-items: center; margin: 0 auto 12px; border-radius: 50%; color: var(--blue); background: #edf4ff; font-size: 1.4rem; }
+        .classification-box { background: #f7faff; border: 1px solid #dbe7fb; border-radius: 8px; }
+        .classification-label { color: var(--muted); font-size: .7rem; }
+        .classification-value { display: block; margin-top: 3px; font-size: .9rem; font-weight: 800; }
+        .output-section-label { color: var(--muted); font-size: .7rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+        .kb-item { border-left: 3px solid #79a8ef; background: #f8fafc; border-radius: 0 7px 7px 0; padding: 10px 12px; }
+        .kb-item + .kb-item { margin-top: 7px; }
+        .kb-title { font-size: .82rem; font-weight: 800; }
+        .kb-meta { color: var(--muted); font-size: .7rem; }
+        .resolution-list { padding-left: 1.25rem; font-size: .84rem; }
+        .resolution-list li { margin-bottom: 9px; }
+        .history-table th { color: var(--muted); font-size: .7rem; letter-spacing: .06em; text-transform: uppercase; white-space: nowrap; }
+        .history-table td { vertical-align: middle; font-size: .82rem; }
+        .empty-history { padding: 70px 20px; color: var(--muted); text-align: center; }
+        .chat-launcher { position: fixed; right: 24px; bottom: 24px; z-index: 20; width: 52px; height: 52px; border: 0; border-radius: 50%; color: #fff; background: var(--blue); box-shadow: 0 10px 24px rgba(37,99,235,.28); }
+        .chat-panel { position: fixed; right: 24px; bottom: 88px; z-index: 19; width: min(390px, calc(100vw - 32px)); display: none; overflow: hidden; }
+        .chat-panel.open { display: block; }
+        .chat-messages { height: 290px; overflow-y: auto; padding: 14px; background: #f8fafc; }
+        .chat-bubble { max-width: 86%; padding: 9px 11px; margin-bottom: 9px; border-radius: 10px; font-size: .82rem; white-space: pre-line; }
+        .chat-bubble.user { margin-left: auto; color: #fff; background: var(--blue); }
+        .chat-bubble.agent { background: #fff; border: 1px solid var(--line); }
+        @media (max-width: 991px) { .sidebar { width: 82px; padding-left: 10px !important; padding-right: 10px !important; } .brand-copy, .sidebar-label, .sidebar .nav-link span, .sidebar-footer { display: none; } .sidebar .nav-link { justify-content: center; } .sidebar .nav-link i { width: auto; } }
+        @media (max-width: 575px) { .sidebar { width: 100%; min-height: auto; } .app-shell { display: block !important; } .sidebar { display: flex; align-items: center; gap: 12px; padding: 12px !important; } .sidebar .brand { margin-bottom: 0 !important; } .sidebar nav { display: flex; flex: 1; justify-content: flex-end; gap: 3px; } .sidebar .nav-link { margin: 0; padding: 9px; } .main-content { padding: 20px 14px !important; } }
+    </style>
+</head>
+<body>
+<div class="app-shell d-flex">
+    <aside class="sidebar flex-shrink-0 p-3">
+        <div class="brand d-flex align-items-center gap-2 mb-5 px-2">
+            <div class="brand-mark"><i class="bi bi-stars text-white"></i></div>
+            <div class="brand-copy"><div class="brand-name">SupportPilot</div><div class="brand-subtitle">Enterprise ITSM portal</div></div>
+        </div>
+        <div class="sidebar-label px-2 mb-2">Workspace</div>
+        <nav class="nav nav-pills flex-column" role="tablist" aria-label="Primary navigation">
+            <button class="nav-link active" id="analytics-tab" data-bs-toggle="pill" data-bs-target="#analytics-panel" type="button" role="tab" aria-controls="analytics-panel" aria-selected="true"><i class="bi bi-bar-chart-line"></i><span>Analytics Dashboard</span></button>
+            <button class="nav-link" id="support-tab" data-bs-toggle="pill" data-bs-target="#support-panel" type="button" role="tab" aria-controls="support-panel" aria-selected="false"><i class="bi bi-headset"></i><span>AI Support Desk</span></button>
+            <button class="nav-link" id="history-tab" data-bs-toggle="pill" data-bs-target="#history-panel" type="button" role="tab" aria-controls="history-panel" aria-selected="false"><i class="bi bi-clock-history"></i><span>Ticket History</span></button>
+        </nav>
+        <div class="sidebar-footer mt-auto pt-4 px-2 small"><i class="bi bi-shield-check me-1"></i>Secure workspace</div>
+    </aside>
+
+    <main class="main-content flex-grow-1 p-4 p-lg-5">
+        <header class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-4">
+            <div><div class="eyebrow mb-2">Support operations control center</div><h1 class="h3 fw-bold mb-1">Enterprise IT Service Management</h1><p class="text-secondary mb-0">A single workspace for operational insight, AI-assisted resolution, and ticket history.</p></div>
+            <span class="badge text-primary bg-primary-subtle rounded-pill px-3 py-2"><i class="bi bi-layers me-1"></i>Milestones 1-3</span>
+        </header>
+
+        <div class="tab-content" id="portal-tab-content">
+            <section class="tab-pane fade show active" id="analytics-panel" role="tabpanel" aria-labelledby="analytics-tab" tabindex="0">
+                <div class="row g-3 mb-4">
+                    <div class="col-12 col-md-4"><div class="panel metric-card p-3"><div class="d-flex justify-content-between align-items-start"><div><div class="metric-label">Total Tickets</div><div class="metric-value">{{ metrics.total_tickets }}</div><small class="text-secondary">M1 dataset records</small></div><div class="metric-icon"><i class="bi bi-ticket-perforated"></i></div></div></div></div>
+                    <div class="col-12 col-md-4"><div class="panel metric-card p-3"><div class="d-flex justify-content-between align-items-start"><div><div class="metric-label">Resolution Rate</div><div class="metric-value">{{ metrics.resolution_rate }}%</div><small class="text-secondary">{{ metrics.resolved_tickets }} resolved tickets</small></div><div class="metric-icon"><i class="bi bi-check2-circle"></i></div></div></div></div>
+                    <div class="col-12 col-md-4"><div class="panel metric-card p-3"><div class="d-flex justify-content-between align-items-start"><div><div class="metric-label">Avg. Response Time</div><div class="metric-value">{{ metrics.avg_response_time }}</div><small class="text-secondary">CSV activity baseline</small></div><div class="metric-icon"><i class="bi bi-stopwatch"></i></div></div></div></div>
+                </div>
+                <div class="row g-4">
+                    <div class="col-12 col-lg-7"><div class="panel chart-panel p-4"><div class="d-flex justify-content-between align-items-start mb-3"><div><h2 class="section-title mb-1">Ticket Volume by Category</h2><div class="section-subtitle">Chart.js placeholder for CSV-backed category trends</div></div><i class="bi bi-three-dots text-secondary"></i></div><div class="chart-container"><canvas id="ticket-volume-chart" aria-label="Ticket volume by category chart"></canvas></div></div></div>
+                    <div class="col-12 col-lg-5"><div class="panel chart-panel p-4"><div class="d-flex justify-content-between align-items-start mb-3"><div><h2 class="section-title mb-1">Priority Distribution</h2><div class="section-subtitle">Chart.js placeholder for P1-P4 mix</div></div><i class="bi bi-three-dots text-secondary"></i></div><div class="chart-container"><canvas id="priority-distribution-chart" aria-label="Priority distribution chart"></canvas></div></div></div>
+                </div>
+            </section>
+
+            <section class="tab-pane fade" id="support-panel" role="tabpanel" aria-labelledby="support-tab" tabindex="0">
+                <div class="d-flex flex-wrap justify-content-between align-items-end gap-3 mb-4"><div><div class="eyebrow mb-2">AI-assisted operations</div><h2 class="h4 fw-bold mb-1">AI Support Desk</h2><p class="text-secondary mb-0">Classify, retrieve, resolve, and escalate from one ticket intake.</p></div><div class="d-flex align-items-center gap-2"><span id="auth-status" class="badge text-secondary bg-secondary-subtle rounded-pill">Not authenticated</span><a class="btn btn-outline-primary btn-sm" href="/login"><i class="bi bi-box-arrow-in-right me-1"></i>Open Login</a></div></div>
+                <div class="row g-4 align-items-stretch">
+                    <div class="col-12 col-lg-6"><div class="panel desk-pane p-4"><div class="d-flex justify-content-between align-items-start mb-3"><div><h3 class="section-title mb-1">Ticket Intake</h3><div class="section-subtitle">Submit an issue to activate the agent workflow.</div></div><i class="bi bi-inbox text-primary fs-4"></i></div><div class="d-flex flex-wrap gap-2 mb-4"><button class="quick-chip" type="button" data-title="VPN connection timeout" data-description="The corporate VPN times out and I cannot connect to the company network."><i class="bi bi-wifi me-1"></i>VPN Timeout</button><button class="quick-chip" type="button" data-title="Password reset request" data-description="I am locked out of my account and need a password reset."><i class="bi bi-key me-1"></i>Password Reset</button><button class="quick-chip" type="button" data-title="Hardware issue" data-description="My laptop screen is flickering and the device is difficult to use."><i class="bi bi-laptop me-1"></i>Hardware Issue</button></div><form id="ticket-form" onsubmit="processTicket(event)"><div class="row g-3"><div class="col-md-6"><label class="form-label" for="customer-name">Customer Name</label><input class="form-control" id="customer-name" required placeholder="Full name"></div><div class="col-md-6"><label class="form-label" for="department">Department</label><select class="form-select" id="department" required><option value="" selected disabled>Select department</option><option>IT</option><option>Finance</option><option>HR</option><option>Sales</option><option>Operations</option><option>Other</option></select></div></div><label class="form-label mt-3" for="ticket-title">Title</label><input class="form-control mb-3" id="ticket-title" required placeholder="Short issue summary"><label class="form-label" for="ticket-description">Description</label><textarea class="form-control mb-3" id="ticket-description" required placeholder="Describe the issue, symptoms, and any error messages."></textarea><label class="form-label" for="email">Email <span class="text-secondary fw-normal">(required for resolution email)</span></label><input class="form-control mb-4" id="email" type="email" required placeholder="user@company.com"><button class="btn btn-primary w-100" id="process-button" type="submit"><i class="bi bi-play-fill me-1"></i>Process Ticket</button></form></div></div>
+                    <div class="col-12 col-lg-6"><div class="panel desk-pane p-4"><div class="d-flex justify-content-between align-items-start mb-3"><div><h3 class="section-title mb-1">Unified Agent Output</h3><div class="section-subtitle">M1 classification, M2 retrieval, and M3 orchestration</div></div><span id="status-badge" class="badge rounded-pill bg-secondary-subtle text-secondary">Waiting</span></div><div id="output" class="agent-output output-placeholder"><div><div class="output-icon"><i class="bi bi-diagram-3"></i></div><div>Authenticate and submit a ticket to see agent activity.</div></div></div></div></div>
+                </div>
+            </section>
+
+            <section class="tab-pane fade" id="history-panel" role="tabpanel" aria-labelledby="history-tab" tabindex="0">
+                <div class="d-flex flex-wrap justify-content-between align-items-end gap-3 mb-4"><div><div class="eyebrow mb-2">Operational records</div><h2 class="h4 fw-bold mb-1">Ticket History</h2><p class="text-secondary mb-0">Recent tickets and workflow outcomes.</p></div><button class="btn btn-outline-secondary btn-sm" type="button"><i class="bi bi-download me-1"></i>Export</button></div>
+                <div class="panel overflow-hidden"><div class="table-responsive"><table class="table table-hover history-table mb-0"><thead class="table-light"><tr><th class="ps-4">Ticket ID</th><th>Customer</th><th>Department</th><th>Title</th><th>Category</th><th>Priority</th><th>Status</th><th class="pe-4">Created</th></tr></thead><tbody id="history-rows"><tr><td colspan="8"><div class="empty-history"><i class="bi bi-inbox fs-2 d-block mb-2"></i><div class="fw-semibold">Sign in to load ticket history</div><small>Processed tickets will appear here after authentication.</small></div></td></tr></tbody></table></div></div>
+            </section>
+        </div>
+    </main>
+</div>
+
+<button class="chat-launcher" id="chat-launcher" type="button" aria-label="Open customer chat"><i class="bi bi-chat-dots fs-5"></i></button>
+<section class="chat-panel panel" id="chat-panel" aria-label="Customer support chat">
+    <div class="d-flex align-items-center justify-content-between px-3 py-2 border-bottom"><div><strong class="small">SupportPilot Assistant</strong><small class="d-block text-secondary">Ask a support question</small></div><button class="btn btn-sm text-secondary" id="chat-close" type="button" aria-label="Close chat"><i class="bi bi-x-lg"></i></button></div>
+    <div class="chat-messages" id="chat-messages"><div class="chat-bubble agent">Hello. Describe your IT issue and I will suggest the next steps.</div></div>
+    <form class="d-flex gap-2 p-2" id="chat-form"><input class="form-control form-control-sm" id="chat-input" required placeholder="Ask a support question..."><button class="btn btn-primary btn-sm" type="submit" aria-label="Send chat message"><i class="bi bi-send"></i></button></form>
+</section>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+function escapeHtml(value) {
+    return String(value).replace(/[&<>\"']/g, character => ({'&':'&amp;', '<':'&lt;', '>':'&gt;', '\"':'&quot;', "'":'&#039;'}[character]));
+}
+
+async function authenticate(endpoint) {
+    const username = window.prompt('Username');
+    const password = window.prompt('Password');
+    if (!username || !password) return;
+    const status = document.getElementById('auth-status');
+    try {
+        const response = await fetch(endpoint, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({username, password}) });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.msg || 'Authentication failed');
+        if (data.access_token) {
+            localStorage.setItem('access_token', data.access_token);
+            status.textContent = `Authenticated as ${data.username}`;
+            status.className = 'badge text-success bg-success-subtle rounded-pill';
+        }
+    } catch (error) {
+        status.textContent = error.message;
+        status.className = 'badge text-danger bg-danger-subtle rounded-pill';
+    }
+}
+
+async function processTicket(event) {
+    event.preventDefault();
+    const output = document.getElementById('output');
+    const badge = document.getElementById('status-badge');
+    const button = document.getElementById('process-button');
+    const token = localStorage.getItem('access_token');
+    const customerName = document.getElementById('customer-name').value.trim();
+    const department = document.getElementById('department').value;
+    const ticket = `${document.getElementById('ticket-title').value.trim()} ${document.getElementById('ticket-description').value.trim()}`.trim();
+    const email = document.getElementById('email').value.trim();
+    if (!token) { output.className = 'agent-output'; output.innerHTML = '<div class="text-danger py-4">Please authenticate before processing a ticket.</div>'; return; }
+    button.disabled = true;
+    button.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Processing';
+    output.className = 'agent-output';
+    output.innerHTML = '<div class="text-secondary py-5 text-center"><span class="spinner-border spinner-border-sm me-2"></span>Agents are collaborating...</div>';
+    try {
+        const response = await fetch('/api/ticket', { method: 'POST', headers: {'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`}, body: JSON.stringify({ticket, email, customer_name: customerName, department}) });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.msg || data.error || 'Ticket processing failed');
+        const diagnosis = data.result.diagnosis;
+        const retrieval = data.result.retrieval;
+        const resolution = data.result.resolution;
+        const statusClass = data.status === 'AUTO_RESOLVE' ? 'text-success bg-success-subtle' : 'text-danger bg-danger-subtle';
+        badge.className = `badge rounded-pill ${statusClass}`;
+        badge.textContent = data.status;
+        const context = (retrieval.results || []).map(article => `<div class="kb-item"><div class="kb-title">${escapeHtml(article.title)}</div><div class="kb-meta">${escapeHtml(article.category)} · ${(article.score * 100).toFixed(1)}% similarity</div></div>`).join('');
+        const steps = resolution.steps.map(step => `<li>${escapeHtml(step)}</li>`).join('');
+        const transaction = data.email ? `Email: ${escapeHtml(data.email.message)}` : data.jira ? `Jira: ${escapeHtml(data.jira.message)}${data.jira.ticket_id ? ` (${escapeHtml(data.jira.ticket_id)})` : ''}` : 'No external transaction recorded';
+        output.innerHTML = `<div class="classification-box p-3 mb-3"><div class="output-section-label mb-2">M1 ML Classification</div><div class="row g-2"><div class="col-4"><span class="classification-label">Category</span><strong class="classification-value">${escapeHtml(diagnosis.category)}</strong></div><div class="col-4"><span class="classification-label">Severity</span><strong class="classification-value">${escapeHtml(diagnosis.severity)}</strong></div><div class="col-4"><span class="classification-label">Priority</span><strong class="classification-value">${escapeHtml(diagnosis.priority)}</strong></div></div></div><div class="d-flex flex-wrap gap-2 mb-4"><span class="badge text-primary bg-primary-subtle"><i class="bi bi-cpu me-1"></i>Diagnosis ${(diagnosis.confidence * 100).toFixed(1)}%</span><span class="badge text-primary bg-primary-subtle"><i class="bi bi-search me-1"></i>Retrieval ${(retrieval.similarity * 100).toFixed(1)}%</span><span class="badge text-dark bg-warning-subtle"><i class="bi bi-shield-check me-1"></i>Validation ${data.confidence}%</span></div><div class="output-section-label mb-2">M2 Retrieved KB Context</div><div class="mb-4">${context}</div><div class="output-section-label mb-2">AI-Generated Resolution</div><ol class="resolution-list mb-4">${steps}</ol><div class="border-top pt-3 mb-3 small text-secondary"><i class="bi bi-plug me-1"></i>${escapeHtml(transaction)}</div><button class="btn btn-outline-danger btn-sm" type="button" onclick="this.textContent='Escalation queued'; this.disabled=true;"><i class="bi bi-person-up me-1"></i>Escalate to Human Agent</button>`;
+        loadHistory();
+    } catch (error) {
+        badge.className = 'badge rounded-pill text-danger bg-danger-subtle';
+        badge.textContent = 'ERROR';
+        output.className = 'agent-output';
+        output.innerHTML = `<div class="text-danger py-4">${escapeHtml(error.message)}</div>`;
+    } finally {
+        button.disabled = false;
+        button.innerHTML = '<i class="bi bi-play-fill me-1"></i>Process Ticket';
+    }
+}
+
+function addChatMessage(text, type) {
+    const messages = document.getElementById('chat-messages');
+    const bubble = document.createElement('div');
+    bubble.className = `chat-bubble ${type}`;
+    bubble.textContent = text;
+    messages.appendChild(bubble);
+    messages.scrollTop = messages.scrollHeight;
+}
+
+document.getElementById('chat-launcher').addEventListener('click', () => document.getElementById('chat-panel').classList.toggle('open'));
+document.getElementById('chat-close').addEventListener('click', () => document.getElementById('chat-panel').classList.remove('open'));
+document.getElementById('chat-form').addEventListener('submit', async event => {
+    event.preventDefault();
+    const input = document.getElementById('chat-input');
+    const message = input.value.trim();
+    const token = localStorage.getItem('access_token');
+    if (!token) { addChatMessage('Please sign in before using the assistant.', 'agent'); return; }
+    addChatMessage(message, 'user');
+    input.value = '';
+    try {
+        const response = await fetch('/api/chat', {method: 'POST', headers: {'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`}, body: JSON.stringify({message})});
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.msg || data.error || 'Chat request failed');
+        addChatMessage(`${data.answer}\n\n${data.steps.map((step, index) => `${index + 1}. ${step}`).join('\n')}`, 'agent');
+    } catch (error) {
+        addChatMessage(error.message, 'agent');
+    }
+});
+
+document.querySelectorAll('.quick-chip').forEach(chip => chip.addEventListener('click', () => {
+    document.getElementById('ticket-title').value = chip.dataset.title;
+    document.getElementById('ticket-description').value = chip.dataset.description;
+}));
+
+async function loadHistory() {
+    const token = localStorage.getItem('access_token');
+    const rows = document.getElementById('history-rows');
+    if (!token || !rows) return;
+    try {
+        const response = await fetch('/api/tickets', {headers: {'Authorization': `Bearer ${token}`}});
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.msg || 'Unable to load ticket history');
+        if (!data.tickets.length) {
+            rows.innerHTML = '<tr><td colspan="8"><div class="empty-history"><i class="bi bi-inbox fs-2 d-block mb-2"></i><div class="fw-semibold">No processed tickets yet</div><small>Submit a ticket from the AI Support Desk.</small></div></td></tr>';
+            return;
+        }
+        rows.innerHTML = data.tickets.map(ticket => `<tr><td class="ps-4 fw-semibold">${escapeHtml(ticket.ticket_id)}</td><td>${escapeHtml(ticket.customer_name || 'Unknown')}</td><td>${escapeHtml(ticket.department || 'Unassigned')}</td><td title="${escapeHtml(ticket.description)}">${escapeHtml(ticket.description.slice(0, 42))}${ticket.description.length > 42 ? '...' : ''}</td><td>${escapeHtml(ticket.category)}</td><td><span class="badge text-primary bg-primary-subtle">${escapeHtml(ticket.priority || 'N/A')}</span></td><td><span class="badge ${ticket.status === 'AUTO_RESOLVE' ? 'text-success bg-success-subtle' : 'text-danger bg-danger-subtle'}">${escapeHtml(ticket.status)}</span></td><td class="pe-4 text-secondary">${escapeHtml(ticket.created_at || '')}</td></tr>`).join('');
+    } catch (error) {
+        rows.innerHTML = `<tr><td colspan="8"><div class="empty-history text-danger">${escapeHtml(error.message)}</div></td></tr>`;
+    }
+}
+
+document.getElementById('history-tab').addEventListener('shown.bs.tab', loadHistory);
+if (localStorage.getItem('access_token')) {
+    const authStatus = document.getElementById('auth-status');
+    authStatus.textContent = 'Authenticated';
+    authStatus.className = 'badge text-success bg-success-subtle rounded-pill';
+}
+
+const chartColors = ['#2563eb', '#0f9f8c', '#c98216', '#7c5ce0', '#dc6474', '#5594c4'];
+const categoryLabels = {{ metrics.category_distribution|tojson }};
+const priorityLabels = {{ metrics.priority_distribution|tojson }};
+new Chart(document.getElementById('ticket-volume-chart'), { type: 'bar', data: { labels: Object.keys(categoryLabels), datasets: [{ label: 'Tickets', data: Object.values(categoryLabels), backgroundColor: chartColors, borderRadius: 5 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } }, x: { grid: { display: false } } } } });
+new Chart(document.getElementById('priority-distribution-chart'), { type: 'doughnut', data: { labels: ['P1 Critical', 'P2 High', 'P3 Medium', 'P4 Low'], datasets: [{ data: [priorityLabels.P1 || 0, priorityLabels.P2 || 0, priorityLabels.P3 || 0, priorityLabels.P4 || 0], backgroundColor: ['#dc4f5c', '#e49a36', '#a8c85d', '#5594c4'], borderColor: '#fff', borderWidth: 3 }] }, options: { responsive: true, maintainAspectRatio: false, cutout: '65%', plugins: { legend: { position: 'bottom', labels: { usePointStyle: true, boxWidth: 8 } } } } });
+</script>
+</body>
+</html>

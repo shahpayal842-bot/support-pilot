@@ -4,3 +4,4 @@ __pycache__/
 
 # Local/generated project files
 archive.zip
+tickets.db
